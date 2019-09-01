@@ -1,0 +1,183 @@
+            RINEX Extensions for Geostationary Satellites Version 2.10
+
+
+                                  Proposal
+
+                 for Some Modifications/Clarifications of
+
+             RINEX Navigation Message Files for GEO Satellites                                     
+
+
+                            Werner Gurtner, AIUB
+                            Norbert Suard, CNES
+                              Lou Estey, UNAVCO
+
+                                 19-Dec-2003
+
+
+We propose the following modifications/clarifications in Chapter 9.2 of the document
+"RINEX The Receiver Independent Exchange Format Version 2.10" by W. GUrtner [1]
+
+
+9.2 RINEX Navigation Message Files for GEO Satellites
+-----------------------------------------------------
+
+- Rename "Message frame time" to "Transmission Time of Message".
+   Clarify Beginning of the message
+
+- "Transmission Time of Message" is expressed in GPS seconds of the week
+   (previously seconds of the day), clearer defined to be the beginning
+   of the message transmission.
+
+- "The Transmission Time of Message" has to refer to the same GPS week as the
+  "Epoch of Ephemerides". Adjust it by - or + 604800 seconds if necessary
+   (which makes it lower than   zero or larger than 604800, respectively).
+
+- "Health" shall be defined as follows Bits 0 to 3 equal to Health in Message
+  Type 17 (MT17), bit 4 is set to 1 if MT17 health is unavailable, bit 5 is set
+  to 1 if the URA index is equal to 15. (In the SBAS message definitions bit 3
+  of the health is currently marked as 'reserved'). In case of bit 4 set to 1,
+  it is recommended to set to 1 bit 0 to 3.  
+
+- "URA" Follow same convention for converting URA index to meters as with GPS.
+  URA = 32767 meters if URA index = 15.
+
+- Replace CORR TO SYSTEM TIME by a GPS-like DELTA-UTC, supplemented with a
+  satellite system designator, e.g.
+
+ 0.133179128170D-06-0.107469588780D-12 518400 124O EGNOS  5 D-UTC A0,A1,T,W,S,U
+
+  This type of optional record, if provided, could be present in the header 
+  as required regarding number of SBAS or change per SBAS.
+
+- "IODN" Clarify IODN data (Issue Of Data Navigation) as defined in
+  RTCA DO229, Annex A for Message Type 9. 
+  The IODN is defined as the 8 first bits after the message type 9, 
+  called IODN in DO229A and DO229B and called "spare" in DO229C
+
+- BROADCAST ORBIT - 3 The fourth parameter (currently 'spare') will be defined
+  as IODN
+
+
+References
+
+[1]  W. Gurtner, "RINEX The Receiver Independent Exchange Format Version 2.10",
+      ftp//igscb.jpl.nasa.gov/igscb/data/format/rinex210.txt 
+
+----|---1|0---|---2|0---|---3|0---|---4|0---|---5|0---|---6|0---|---7|0---|---8|
+
+ +----------------------------------------------------------------------------+
+ |                                   TABLE A15                                |
+ |     GEOSTATIONARY NAVIGATION MESSAGE FILE - HEADER SECTION DESCRIPTION     |
+ +--------------------+------------------------------------------+------------+
+ |    HEADER LABEL    |               DESCRIPTION                |   FORMAT   |
+ |  (Columns 61-80)   |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |RINEX VERSION / TYPE| - Format version (2.xx)                  | F9.2,11X,  |
+ |                    | - File type ('H' = GEO nav mess data)    |   A1,39X   |
+ +--------------------+------------------------------------------+------------+
+ |PGM / RUN BY / DATE | - Name of program creating current file  |     A20,   |
+ |                    | - Name of agency  creating current file  |     A20,   |
+ |                    | - Date of file creation (dd-mmm-yy hh:mm)|     A20    |
+ +--------------------+------------------------------------------+------------+
+*|COMMENT             | Comment line(s)                          |     A60    |*
+ +--------------------+------------------------------------------+------------+
+*|D-UTC A0,A1,T,W,S,U | Corrections to transform the system time |            |*
+ |                    | to UTC                                   |            |
+ |                    | A0,A1 Coefficients of 1-deg polynomial   |  2D19.12,  |
+ |                    |        A0 sec, A1 sec/sec                |            |
+ |                    |        CORR(s) = A0 + A1*DELTAT          |            |
+ |                    | T  Reference time for polynomial         |     I7,    |
+ |                    |        (Seconds into GPS week)           |            |
+ |                    | W  Reference week number                 |     I5,    |
+ |                    |        (GPS week, continuous number)     |            |
+ |                    | S  EGNOS, WAAS, or MSAS ...              |   X,A5,X   |
+ |                    |    (left-justified)                      |            |
+ |                    | U  UTC Identifier (0 if unknown)         |    I2,X    |
+ |                    |   1=UTC(NIST), 2=UTC(USNO), 3=UTC(SU),   |            |
+ |                    |   4=UTC(BIPM), 5=UTC(Europe Lab),        |            |
+ |                    |   6=UTC(CRL), >6 = reserved for future   |            |
+ +--------------------+------------------------------------------+------------+
+*|LEAP SECONDS        | Number of leap seconds since 6-Jan-1980  |     I6     |*
+ +--------------------+------------------------------------------+------------+
+ |END OF HEADER       | Last record in the header section.       |    60X     |
+ +--------------------+------------------------------------------+------------+
+
+                        Records marked with * are optional
+
+
+ +----------------------------------------------------------------------------+
+ |                                  TABLE A16                                 |
+ |      GEOSTATIONARY NAVIGATION MESSAGE FILE - DATA RECORD DESCRIPTION       |
+ +--------------------+------------------------------------------+------------+
+ |    OBS. RECORD     | DESCRIPTION                              |   FORMAT   |
+ +--------------------+------------------------------------------+------------+
+ |PRN / EPOCH / SV CLK| - Satellite number (PRN minus 100)       |     I2,    |
+ |                    | - Epoch of ephemerides (GPS)       (Toe) |            |
+ |                    |(parameter To in DO 229, Message Type 9)  |            |
+ |                    |     - year (2 digits, padded with 0      |            |
+ |                    |                if necessary)             |   1X,I2.2, |
+ |                    |     - month,day,hour,minute,             |  4(1X,I2), |
+ |                    |     - second                             |    F5.1,   |
+ |                    | - SV clock bias (sec)              (aGf0)|   D19.12,  |
+ |                    | - SV relative frequency bias       (aGf1)|   D19.12,  |
+ |                    | - transmission time (sec of GPS week)    |   D19.12   |
+ +--------------------+------------------------------------------+------------+
+ | BROADCAST ORBIT - 1| - Satellite position X      (km)         | 3X,4D19.12 |
+ |                    | -           velocity X dot  (km/sec)     |            |
+ |                    | -           X acceleration  (km/sec2)    |            |
+ |                    | -           health (0=OK)                |            |
+ +--------------------+------------------------------------------+------------+
+ | BROADCAST ORBIT - 2| - Satellite position Y      (km)         | 3X,4D19.12 |
+ |                    | -           velocity Y dot  (km/sec)     |            |
+ |                    | -           Y acceleration  (km/sec2)    |            |
+ |                    | - Accuracy code             (URA, meters)|            |
+ +--------------------+------------------------------------------+------------+
+ | BROADCAST ORBIT - 3| - Satellite position Z      (km)         | 3X,4D19.12 |
+ |                    | -           velocity Z dot  (km/sec)     |            |
+ |                    | -           Z acceleration  (km/sec2)    |            |
+ |                    | - IODN (Issue of Data Navigation, DO229, |            |
+ |                    |  8 first bits after Message Type if MT9) |            |
+ +--------------------+------------------------------------------+------------+
+
+
++------------------------------------------------------------------------------+
+|                                   TABLE A18                                  |
+|                     GEO NAVIGATION MESSAGE FILE - EXAMPLE                    |
++------------------------------------------------------------------------------+
+
+----|---1|0---|---2|0---|---3|0---|---4|0---|---5|0---|---6|0---|---7|0---|---8|
+
+     2.10           H: GEO NAV MSG DATA                     RINEX VERSION / TYPE
+SBAS2RINEX 2.0      CNES                20-Oct-03 14:01     PGM / RUN BY / DATE                                                            COMMENT
+ 0.133179128170D-06-0.107469588780D-12 518400 1240 EGNOS  5 D-UTC A0,A1,T,W,S,U
+    13                                                      LEAP SECONDS
+This file contains navigation message data from a SBAS      COMMENT
+(geostationary) satellite, here AOR-W (PRN 122 = # 22)      COMMENT
+                                                            END OF HEADER
+22 03 10 18  0  1  4.0-1.005828380585D-07 6.366462912410D-12 5.184420000000D+05
+    2.482832392000D+04-3.593750000000D-04-1.375000000000D-07 0.000000000000D+00
+   -3.408920872000D+04-1.480625000000D-03-5.000000000000D-08 4.000000000000D+00
+   -1.650560000000D+01 8.360000000000D-04 6.250000000000D-08 2.300000000000D+01
+22 03 10 18  0  5 20.0-9.872019290924D-08 5.456968210638D-12 5.186940000000D+05
+    2.482822744000D+04-3.962500000000D-04-1.375000000000D-07 0.000000000000D+00
+   -3.408958936000D+04-1.492500000000D-03-5.000000000000D-08 4.000000000000D+00
+   -1.628960000000D+01 8.520000000000D-04 6.250000000000D-08 2.400000000000D+01
+22 03 10 18  0  9 36.0-9.732320904732D-08 4.547473508865D-12 5.189510000000D+05
+    2.482812152000D+04-4.325000000000D-04-1.375000000000D-07 0.000000000000D+00
+   -3.408997304000D+04-1.505000000000D-03-5.000000000000D-08 4.000000000000D+00
+   -1.606960000000D+01 8.800000000000D-04 6.250000000000D-08 2.500000000000D+01
+22 03 10 18  0 13 52.0-9.592622518539D-08 4.547473508865D-12 5.192110000000D+05
+    2.482800632000D+04-4.681250000000D-04-1.375000000000D-07 0.000000000000D+00
+   -3.409035992000D+04-1.518125000000D-03-3.750000000000D-08 4.000000000000D+00
+   -1.584240000000D+01 8.960000000000D-04 6.250000000000D-08 2.600000000000D+01
+
+----|---1|0---|---2|0---|---3|0---|---4|0---|---5|0---|---6|0---|---7|0---|---8|
+
+
+Contacts:
+********
+
+Werner Gurtner, AIUB  E-Mail: werner.gurtner at aiub.unibe.ch
+Lou Estey, UNAVCO     E-Mail: lou at unavco.org
+Norbert Suard, CNES   E-Mail: Norbert.Suard at cnes.fr

@@ -1,0 +1,87 @@
+Format Modifications for Mixed GPS/GLONASS SP3 Files for the IGEX98 Campaign
+----------------------------------------------------------------------------
+
+                             Revised 27-Oct-1998
+                                           
+
+For the global IGEX98 GPS/GLONASS campaign we have to slightly modify the SP3
+orbit format to allow for GLONASS only or mixed GPS/GLONASS orbit files.
+
+Our proposal which closely follows the RINEX standard is as follows:
+
+1. Satellite System Indicator
+-----------------------------
+
+Replace the " nn" by "Gnn" for GPS satellites (nn being the GPS satellite prn)
+and "Rnn" for GLONASS satellites (nn being the slot number of the GLONASS
+satellite) in all records where the satellite number appears (list of
+satellites in the header, position and velocity records).
+
+Satellite list:
+
++   32   G01G02G04G05G06G07G09G12G14G15G16G17G18G19G20G21G22   <--- Gnn or Rnn
++        G23G24G25G26G27G28G29G31R01R02R03R04R05R06R07  0  0
+
+Positions etc:
+
+*  1998  9 17  0  0  0.00000000
+PG01  16258.524750  -3529.015750 -20611.427050    -62.540600   <--- Gnn or Rnn
+PG02 -21998.652100  -8922.093550 -12229.824050   -131.326200
+PG03 -26019.547600   4809.810900  -2508.578200      3.544600
+PG05   7014.950200  21130.960300 -14387.334650     79.692800
+   .
+   .
+   .
+PR05  13204.937750 -20485.533400  10794.787000     55.200800
+PR06  -1638.431050 -24391.479200  10455.312650      3.690300
+PR07   6265.255800 -25687.986950   -753.359000     70.830800
+
+2. File Type                                              (modified: 27-Oct-98)
+------------
+
+To better indicate the contents of the file we define the first
+one-character spare field in line 13 of the SP3 header as "file type field":
+
+%c ft cc ccc ccc cccc cccc cccc cccc ccccc ccccc ccccc ccccc   <--- G, M or R
+
+   ft: "G " for GPS only files                            
+       "M " for mixed files
+       "R " for GLONASS only files
+
+       - single character left-justified in the two-characters field
+       - No default value, either "G ", "M ", or "R " is required
+
+3. Time System Indicator
+------------------------
+
+In order to remove ambiguities with respect to the time system used for the
+satellite positions (GPS time versus UTC) we define the first three-character
+spare field in line thirteen of the SP3 header portion as "time system field":
+
+%c M  cc tsf ccc cccc cccc cccc cccc ccccc ccccc ccccc ccccc   <--- GPS or UTC
+
+         tsf: "GPS" for GPS time, "UTC" for UTC time
+
+         - No default value, either "GPS" or "UTC" is required
+         - For the IGEX98 campaign we request GPS time for all SP3 orbit files
+
+4. Format Version
+-----------------
+
+To distinguish files with these new definitions from old files we change the
+format version character in the first header line from "a" to "b":
+
+#bP1998  9 17  0  0  0.00000000     126     d ITR96 FIT  COD   <--- b
+
+This proposal has been reviewed by Dr. Ben Remondi, the primary author of the
+SP3 format. Unfortunately no feedback could be obtained from the co-author of
+the SP3 format documentation (see ftp://igscb.jpl.nasa.gov/igscb/data/format)
+till now.
+
+We plan to have this proposal also accepted by IGS for future use.
+
+Best regards,
+
+Werner Gurtner                                    Markus Rothacher
+IGEX98 Steering Committee                         CODE Analysis Center
+
