@@ -1,0 +1,167 @@
+# @(#) sp3     1.3     03/08/95
+
+
+#aV1993  1 29  0  0  0.00000000      96     d ITR91 FIT  JPL
+##  681 432000.00000000   900.00000000 49016 0.0000000000000
++   19     1  2  3 12 13 14 15 16 17 18 19 20 21 23 24 25 26
++         27 28  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
++          0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
++          0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
++          0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+++        10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10
+++        10 11  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+++         0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+++         0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+++         0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+%c cc cc ccc ccc cccc cccc cccc cccc ccccc ccccc ccccc ccccc
+%c cc cc ccc ccc cccc cccc cccc cccc ccccc ccccc ccccc ccccc
+%f  0.0000000  0.000000000  0.00000000000  0.000000000000000
+%f  0.0000000  0.000000000  0.00000000000  0.000000000000000
+%i    0    0    0    0      0      0      0      0         0
+%i    0    0    0    0      0      0      0      0         0
+/* CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+/* CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+/* CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+/* CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+*  1993  1 29  0  0  0.00000000
+P  1  14722.638510   6464.319150 -21020.844810     -8.059218
+V  1  -1196.628800  26950.022500   7502.277100      0.000000
+P  2 -24023.155300 -11843.563990  -1675.647210    -10.813964
+V  2   -769.152700  -3247.508000  31255.023300      0.000000
+P  3   2074.555420  19025.998840  17928.366120   -430.859048
+V  3  -6873.932300  22421.664200 -23147.529600      0.000000
+P 12  -6236.325580  13153.271260 -21964.100040   -108.945737
+V 12 -27384.917100   6805.632800  12337.728800      0.000000
+P 13 -13306.857100   4790.062110 -22360.523490    628.240251
+V 13   9739.738600 -26864.612400 -11662.222500      0.000000
+           .             .             .             .
+           .             .             .             .
+           .             .             .             .
+P 27 -19350.820260  -4003.111190  17582.690790     14.651464
+V 27  19491.879100 -11990.042400  18156.904400      0.000000
+P 28  13316.378500 -13959.644490  18317.660940     52.520005
+V 28    258.246400  23316.420800  17208.928500      0.000000
+EOF
+
+
+SP3 LINE 1
+ col  1       symbol                   #
+ col  2       version id               a
+ col  3       P/V mode flag            V
+ col  4- 7    year start               1993
+ col  9-10    month start              _1
+ col 12-13    day of month start       29
+ col 15-16    hour start               _0
+ col 18-19    minute start             _0
+ col 21-31    second start             _0.00000000
+ col 33-39    number of epochs         _____96
+ col 41-45    data used                ____d
+ col 47-51    coordinate system        ITR91
+ col 53-55    orbit type               FIT
+ col 57-60    agency name              _JPL
+
+SP3 LINE 2
+ col  1- 2    symbols                  ##
+ col  4- 7    GPS week                 _681
+ col  9-23    seconds of week          432000.00000000
+ col 25-38    epoch interval           __900.00000000
+ col 40-44    mod. julian day start    49016
+ col 46-60    fractional day           0.0000000000000
+
+SP3 LINE 3
+ col  1- 2    symbols                  +_
+ col  5- 6    number of satellites     19
+ col 10-12    sat #1 id                __1
+ col 13-15    sat #2 id                __2
+  .
+  .
+  .
+ col 58-60    sat #17 id               _26
+
+SP3 LINES 4-7
+ col  1- 2    symbols                  +_
+ col 10-12    sat #18(35,52,69) id     _27
+ col 13-15    sat #19(36,53,70) id     _28
+  .
+  .
+  .
+ col 58-60    sat #34(51,68,85) id     __0
+
+SP3 LINES 8-12
+ col  1- 2    symbols                  ++
+ col 10-12    sat #1(18,35,52,69) acc  _10
+ col 13-15    sat #2(19,36,53,70) acc  _10
+  .
+  .
+  .
+ col 58-60    sat #17(34,51,68,85) acc _10
+
+SP3 LINES 13-14
+ col  1- 2    symbols                  %c
+ col  4- 5    2 characters             cc
+ col  7- 8    2 characters             cc
+ col 10-12    3 characters             ccc
+ col 14-16    3 characters             ccc
+ col 18-21    4 characters             cccc
+ col 23-26    4 characters             cccc
+ col 28-31    4 characters             cccc
+ col 33-36    4 characters             cccc
+ col 38-42    5 characters             ccccc
+ col 44-48    5 characters             ccccc
+ col 50-54    5 characters             ccccc
+ col 56-60    5 characters             ccccc
+
+SP3 LINES 15-16
+ col  1- 2    symbols                  %f
+ col  4-13    10-column float          _0.0000000
+ col 15-26    12-column float          _0.000000000
+ col 28-41    14-column float          _0.00000000000
+ col 43-60    18-column float          _0.000000000000000
+
+SP3 LINES 17-18
+ col  1- 2    symbols                  %i
+ col  4- 7    4-column int             ___0
+ col  9-12    4-column int             ___0
+ col 14-17    4-column int             ___0
+ col 19-22    4-column int             ___0
+ col 24-29    6-column int             _____0
+ col 31-36    6-column int             _____0
+ col 38-43    6-column int             _____0
+ col 45-50    6-column int             _____0
+ col 52-60    9-column int             ________0
+
+SP3 LINES 19-22
+ col  1- 2    symbols                  /*
+ col  4-60    comment                  CC...CC
+
+SP3 LINE 23 (epoch header record)
+ col  1- 2    symbols                  *_
+ col  4- 7    year start               1993
+ col  9-10    month start              _1
+ col 12-13    day of month start       29
+ col 15-16    hour start               _0
+ col 18-19    minute start             _0
+ col 21-31    second start             _0.00000000
+
+SP3 LINE 24 (position and clock record)
+ col  1       symbol                   P
+ col  2- 4    satellite id             __1
+ col  5-18    x-coordinate (km)        __14722.638510
+ col 19-32    y-coordinate (km)        ___6464.319150
+ col 33-46    z-coordinate (km)        _-21020.844810
+ col 47-60    clock (microsec)         _____-8.059218
+
+SP3 LINE 25 (velocity and clock record)
+ col  1       symbol                   V
+ col  2- 4    satellite id             __1
+ col  5-18    x-dot (decim/sec)        __-1196.628800
+ col 19-32    y-dot (decim/sec)        __26950.022500
+ col 33-46    z-dot (decim/sec)        ___7502.277100
+ col 47-60    cl rate (10e-4 msec/sec) ______0.000000
+  .
+  .
+  .
+
+SP3 LINE 22+numeps*(numsats+1)+1 (last line)
+ col  1- 3    symbols                  EOF
+

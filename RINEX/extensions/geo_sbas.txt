@@ -1,0 +1,206 @@
+
+                                  Proposal
+
+        for a new RINEX-type Exchange File for GEO SBAS Broadcast Data
+
+                             Norbert Suard, CNES
+
+                            Werner Gurtner, AIUB
+                              Lou Estey, UNAVCO
+
+                                 19-Dec-2003
+
+
+Modifications: 11-Aug-2004: File naming proposal extended
+               14-Sep-2004: PRN definition in the PRN / EPOCH / RCVR record
+                            extended
+
+RINEX-type Broadcast Data Files for GEO Satellites (DO 229 or similar)
+----------------------------------------------------------------------
+
+In order to be able to easily exchange the binary data broadcast by Space-Based
+Augmentation Systems (SBAS) like EGNOS, WAAS, MSAS we propose a receiver-
+independent exchange format similar to the RINEX format widely used
+for the exchange of geodetic GPS and GLONASS tracking data [1].
+
+The file includes all the binary data sent by one or several GEO payloads,
+collected in a specific time interval (usually one day). Currently a message
+block consists of 250 bits (see RTCA DO-229x Annex A, [2]). It is supplemented
+by six trailing zero-bits for convenience to get 32 bytes and optionally by
+some receiver-generated CRC parity bytes. 
+These data could also be repeated or transmitted on ground by an other 
+Transmission System (ex : pseudolite, SiSNET (see ESA web site) ...).
+Similar information could be provided by some other systems as CDGPS (Canadian
+wide DGPS (see www.cdgps.com web site), the decoding of their messages shall be
+done by reference to their own interface description. The constraints to use
+this format definition are :
+- to have an identifier number by each source of broadcast
+- and to have somewhere in each message a message frame identifier.
+Next tables are highlighted with SBAS DO229 examples.
+
+The RINEX Navigation Message File (as defined in [1]) is a reformatted
+extraction of data from broadcast message types 9, 17 and 12 when relevant.
+
+File naming conventions
+-----------------------
+
+We propose to use the same file naming scheme as for RINEX files:
+
+Daily or hourly files:
+
+   ssssdddh.yyt
+   |   |  | | |
+   |   |  | | +---- file type: B = Geostationary GPS payload broadcast data
+   |   |  | | |                    file
+   |   |  | +------ two-digit year
+   |   |  +-------- character for the n-th hour in the day
+   |   |            (a= 1st hour: 00h-01h, b= 2nd hour: 1h to 2h,...,
+   |   |             x=24th hour: 23h-24h. 0= one-day file)
+   |   +----------- day of the year
+   +--------------- 4-character ID for the tracking station
+                    or agency name designator
+
+For shorter files we recommend the following extended filenames (same format
+used for high-rate RINEX data files)
+
+   ssssdddhmm.yyt
+   |   |  ||  | |
+   |   |  ||  | +--- file type: B = Geostationary GPS payload broadcast data
+   |   |  ||  |                     file
+   |   |  ||  +----- two-digit year
+   |   |  |+-------- starting minute within the hour (00, 15, 30, 45)
+   |   |  +--------  character for the n-th hour in the day
+   |   |             (a= 1st hour: 00h-01h, b= 2nd hour: 1h to 2h,...,
+   |   |              x=24th hour: 23h-24h. 0= one-day file)
+   |   +------------ day of the year
+   +---------------- 4-character ID for the tracking station
+                     or agency name designator
+
+
+ +----------------------------------------------------------------------------+
+ |                                   TABLE S-1                                |
+ |       GEOSTATIONARY BROADCAST DATA FILE - HEADER SECTION DESCRIPTION       |
+ +--------------------+------------------------------------------+------------+
+ |    HEADER LABEL    |               DESCRIPTION                |   FORMAT   |
+ |  (Columns 61-80)   |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |RINEX VERSION / TYPE| - Format version (2.10)                  | F9.2,11X,  |
+ |                    | - File type ('B' = SBAS binary broadcast |   A1,39X   |
+ |                    |               messages)                  |            |
+ +--------------------+------------------------------------------+------------+
+ |PGM / RUN BY / DATE | - Name of program creating current file  |     A20,   |
+ |                    | - Name of agency  creating current file  |     A20,   |
+ |                    | - Date of file creation (dd-mmm-yy hhmm) |     A20    |
+ +--------------------+------------------------------------------+------------+
+*|COMMENT             | Comment line(s)                          |     A60    |*
+ +--------------------+------------------------------------------+------------+
+*|REC INDEX/TYPE/VERS | - Receiver index. File-internal index    | 3X,I3,14X, |*
+ |                    |   used by "PRN / EPOCH / RCVR" record to |            |
+ |                    |   reference receiver collecting the data |            |
+ |                    |   (0<index<=99)                          |            |
+ |                    | - Receiver type                          |    A20,    |
+ |                    | - Rcvr version (e.g., Firmware version)  |    A20     |
+ |                    | Record repeated for every receiver type  |            |
+ +--------------------+------------------------------------------+------------+
+ |END OF HEADER       | Last record in the header section.       |    60X     |
+ +--------------------+------------------------------------------+------------+
+
+                        Records marked with * are optional
+
+ +----------------------------------------------------------------------------+
+ |                                  TABLE S-2                                 |
+ |        GEOSTATIONARY BROADCAST DATA FILE - DATA RECORD DESCRIPTION         |
+ +--------------------+------------------------------------------+------------+
+ |    OBS. RECORD     | DESCRIPTION                              |   FORMAT   |
+ +--------------------+------------------------------------------+------------+
+ |PRN / EPOCH / RCVR  | - Identifier number:                     |     I3,    |
+ |                    |   - SBAS: PRN (currently defined range:  |            |
+ |                    |                120-158 (see [3)]         |            |
+ |                    |   - Services w/o satellite transmitters  |            |
+ |                    |     can use the identifier to distinguish|            |
+ |                    |     between different servers involved.  |            |
+ |                    |     Use COMMENT lines to further describe|            |
+ |                    |     the servers.                         |            |
+ |                    | - Epoch of data block (GPS time of       |            |
+ |                    |   reception of start of data block)      |            |
+ |                    |     - year (2 digits, padded with 0      |   1X,I2.2, |
+ |                    |                if necessary)             |            |
+ |                    |     - month,day,hour,minute,             |  4(1X,I2), |
+ |                    |     - second                             |    F5.1,   |
+ |                    | - Band (Currently L1 only)               |   2X,A2,   |
+ |                    | - Length of data message (bytes).        |   3X,I3,   |
+ |                    |   SBAS:the message currently consists    |            |
+ |                    |   of 32 bytes (original 250 bits         |            |
+ |                    |   of the transmitted data block plus     |            |
+ |                    |   6 trailing zero-bits) and optional     |            |
+ |                    |   receiver-generated CRC parity bytes.   |            |
+ |                    | - File-internal receiver index           |   3X,I3,   |
+ |                    |   (see REC INDEX/TYPE/VERS record,       |            |
+ |                    |    0 if not applicable)                  |            |
+ |                    | - Transmission System Identifier.        |   3X,A3    |
+ |                    |   SBA : data block transmitted by        |            |
+ |                    |         SBAS satellite                   |            |
+ |                    |   SNT : data block transmitted by SiSNET |            |
+ |                    |   CDG : data block transmitted by CDGPS  |            |
+ |                    |   000 : not known                        |            |
+ +--------------------+------------------------------------------+------------+
+ |   DATA RECORD - 1  | - Message frame identifier               |  1X,I2,4X, |
+ |                    | ex : SBAS Message type derived from the  |            |
+ |                    |    6 MSBs of the second data byte.       |            |
+ |                    | - First 18 bytes of message (hexadecimal)| 18(1X,Z2.2)|
+ +--------------------+------------------------------------------+------------+
+ |   DATA RECORD - 2  | - Remaining bytes of message (hex).      |    7X,     |
+ |                    |   For messages longer than 36 bytes the  | 18(1X,Z2.2)|
+ |                    |   DATA RECORD - 2 is repeated as often as|            |
+ |                    |   necessary.                             |            |
+ +--------------------+------------------------------------------+------------+
+
++------------------------------------------------------------------------------+
+|                                   TABLE S-3                                  |
+|                       GEO BROADCAST DATA FILE - EXAMPLE                      |
++------------------------------------------------------------------------------+
+
+----|---1|0---|---2|0---|---3|0---|---4|0---|---5|0---|---6|0---|---7|0---|---8|
+
+     2.10           B SBAS DATA                             RINEX VERSION / TYPE
+RinExp V.2.0.3      CNES                02-02-01 0751       PGM / RUN BY / DATE
+     1              xyz receiver        1.1.1               REC INDEX/TYPE/VERS
+                                                            COMMENT
+Example with one known and (at least) one unknown receiver  COMMENT
+                                                            COMMENT
+                                                            END OF HEADER
+120 02 01 29 00 00  0.1  L1    32     0   SBA
+  2    53 08 00 50 00 00 00 01 80 00 00 00 00 00 00 00 00 00
+       03 FF 40 01 7B 97 BA FB BB 97 8B FB 54 40
+122 02 01 29 00 00  0.1  L1    35     1   SBA
+  2    53 09 40 00 00 3F B4 00 00 00 00 00 00 00 00 00 00 00
+       1C 00 00 13 B9 BB BB BB B9 39 D0 58 1D 40 05 04 72
+120 02 01 29 00 00  1.1  L1    32     0   SBA
+  1    9A 07 FF BB 7F F8 00 00 00 00 00 00 00 00 00 00 04 00
+       00 00 00 00 00 00 00 00 00 00 3C 94 43 C0
+122 02 01 29 00 00  1.1  L1    35     1   SBA
+ 26    9A 69 44 0C 80 65 03 18 1C C0 C4 04 20 19 81 50 1B 61
+       19 03 28 19 00 E6 07 40 29 80 06 14 B4 C0 22 D7 B3
+120 02 01 29 00 00  2.1  L1    32     0   SBA
+  3    C6 0C 00 00 00 00 03 FB 40 00 00 00 00 03 00 00 00 00
+       38 00 00 03 BB 97 BB A7 B9 FB 83 06 37 40
+122 02 01 29 00 00  2.1  L1    35     1   SBA
+  3    C6 0D 40 00 00 00 03 FE 00 00 00 00 00 00 00 00 00 00
+       00 00 80 03 BB AB BB BB BB 93 95 93 73 00 A8 59 4A
+
+
+References
+
+[1]  W. Gurtner, "RINEX The Receiver Independent Exchange Format Version 2.10",
+      ftp//igscb.jpl.nasa.gov/igscb/data/format/rinex210.txt
+
+[2]  Document RTCA DO 229, Appendix A
+
+[3]  list of PRN submitted to compliance to RTCA DO 229 (SBA transmission
+     system), http//gps.losangeles.af.mil/prn/sbas_ranging_codes.htm
+
+Contacts:
+
+Norbert Suard, CNES   E-Mail: Norbert.Suard at cnes.fr
+Werner Gurtner, AIUB  E-Mail: werner.gurtner at aiub.unibe.ch
+Lou Estey, UNAVCO     E-Mail: lou at unavco.org

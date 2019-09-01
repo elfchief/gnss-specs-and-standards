@@ -1,0 +1,726 @@
+
+
+               RINEX Extensions to Handle Clock Information
+               ********************************************
+
+                      Jim Ray, US Naval Observatory
+                   Werner Gurtner, University of Berne  
+
+
+   (Initial version, 27 August 1998; version 2.00 final update, 16 June 1999)
+                    (Version 3.02, 02 September 2010)
+
+
+-. SUMMARY OF CHANGES IN VERSION 3.00 and later
+
+The changes introduced in version 3.00 are mostly to be consistent with
+RINEX 3.00 and to recognize the use of other Global Navigation Satellite
+Systems (GNSSs) besides the Global Positioning System (GPS):
+
+  a. "RINEX VERSION / TYPE" header changed to 3.00 and to add satellite
+     system designator.
+  b. "PGM / RUN BY / DATE" header date format elaborated.
+  c. "SYS / # / OBS TYPES" header added.
+  d. Added Galileo and Satellite-Based Augmentation System (SBAS) satellite
+     designators in Section 5.
+  e. "TIME SYSTEM ID" header added.
+  f. The satellite antenna phase center offset information has been moved
+     from a mandatory comment to the "SYS / PCVS APPLIED" header and now
+     includes the associated phase center variation information also.
+     It is expected that an external file will be referenced.
+  g. "SYS / DCBS APPLIED" header added.
+  h. Capability of handling inter-system timing biases and new intra-lab
+     biases (possibly as new types of CR data record) are under
+     consideration but not yet adopted.
+  i. In version 3.01 a few cases where "GPS time" was specified have been
+     corrected to read "specified system time".
+  j. In version 3.02 satellite codes for the QZSS ("Jnn") and COMPASS
+     ("Cnn") systems as well as the QZSS system time designator ("QZS")
+     have been added.
+
+
+0. INTRODUCTION
+
+Thus far, the IGS has produced clock results only for the GPS satellites
+and these are tabulated and distributed at the 15-minute intervals used
+in the sp3 orbit ephemerides files.  There is much interest in increasing
+the satellite clock interval to 30 seconds (e.g., to overcome SA effects
+on interpolation) and also in producing station clock results (at some
+appropriate interval, probably 5 minutes).  In principle, the sp3 format
+could continue to be used for both of these extensions, but it would be
+wasteful considering that the vast majority of the file space is set
+aside for orbit information.  Also, the variety of other clock
+information that also needs to be exchanged does not lend itself to the
+sp3 format.
+
+Alternatively, the IGS could devise a new format specifically for
+distributing clock information.  It does not appear that the timing
+community already uses a standard data format that is well suited for the
+IGS needs.
+
+
+1. CLOCK DATA TYPES
+
+At the level of monitoring and reporting data from a specific GPS station
+(or more generally, a "receiver", which could include low Earth-orbiting
+satellites and other non-stationary platforms) the following types of
+observations can be expected:
+
+       calibration data (CR):  time delay measurements between a GPS 
+                               receiver and some external reference point
+                               (e.g., local master clock)
+     discontinuity data (DR):  a phase-tracking GPS receiver (e.g., AOA
+                               TurboRogue) maintains an internal clock that
+                               sometimes will reset itself; in principle,
+                               there may be methods to monitor such changes
+                               which could then be logged as a relative
+                               change in clock state
+
+From analysis of GPS data, the results for an ensemble of receiver and
+satellite clocks can be determined differentially.  Normally, all clock
+values are estimated relative to a single clock being held fixed as a
+reference.  Alternatively, a linear combination of the estimated clocks
+can be held fixed to some apriori value (normally, zero).  Either way,
+all the clock values can be re-aligned after estimation to remove the
+effect of the particular choice of reference clock, which can change for
+each data analysis arc.  Such re-alignment is most commonly done using
+broadcast GPS time for the satellites as an underlying timescale, typically
+fitted to a low-order polynomial.  In any case, the data are:
+
+       analysis data (AR,AS):  results from GPS phase/pseudorange data
+                               analysis for a network of station/receiver
+                               (AR) and satellite (AS) clocks, all relative
+                               to a fixed reference clock (or ensemble)
+                               adopted in the analysis
+
+If a timescale re-alignment has been applied (e.g., to GPS time), then
+the analysis reference clock will have non-zero values (but should still
+be reported as the reference in the header records) and these must be
+reported together with all other estimated clocks in the clock data
+records.  In this case, the method of re-alignment should be described
+in the header comment records.
+
+In addition, the broadcast clocks of the satellites can be monitored and
+compared to a laboratory standard:
+
+           monitor data (MS):  broadcast values for satellite clocks as
+                               compared with a laboratory standard via
+                               monitor receivers (usually timing receivers)
+
+
+2. FORMAT TYPES AND FILE NAMING
+
+Following established practice, the receiver-specific data ("CR" and "DR")
+could be reported using an extension of the RINEX format while the analysis
+data ("Ax" and "MS") could be reported using an extension to a standard
+product format, such as SINEX.  However, since all of these data types are
+related and probably need similar format requirements, it seems more
+economical to consider a single file format type suitable for all.
+
+RINEX seems the most appropriate file type, even though it is not normally
+used for analysis products.  When it becomes feasible and necessary to 
+include clock estimates with other analysis products, then suitable
+formats can be incorporated into SINEX.  Until then, it is suggested that
+a RINEX format extension be used for all clock/timing results.  Normally,
+"CR" and "DR" data types would be collected at the stations, files would be
+prepared at the data centers, and the files would flow to the Global Data
+Centers named as:
+
+        for calibration data (CR) & discontinuity data (DR)
+        ---------------------------------------------------
+        ssssdddf.yyC      ssss:    4-character station/receiver name
+                                   designator
+                           ddd:    day of the year of first record
+                             f:    file sequence number within day
+                                   0: file contains all the existing
+                                      data of the current day
+                            yy:    year
+                             C:    file type "C" for clock information
+
+The suffix "C" would be a new RINEX file type.  Normally, data would be
+compiled into files by each 24-hour day (according to the specified time
+system).
+
+The analysis results "AR", "AS", and "MS" would be formed at IGS Analysis
+Centers or by IGS/BIPM Pilot Project analysis groups and would normally
+include results for a number of stations/receivers and/or satellites.
+These files would be named as:
+
+        for analysis data (Ax) & monitor data (MS)
+        ------------------------------------------
+        cccwwwwd.clk       ccc:    3-character analysis center name
+                                   designator
+                          wwww:    GPS week number
+                             d:    day within GPS week (0 - 7)
+                           clk:    suffix to identify clock information
+                                   product files
+
+Files could be either daily (d = 0,...,6) or weekly (d = 7).
+
+However, despite the file names, a single format for the contents would
+apply for all data types.
+
+
+3. NUMERICAL PRECISION
+
+All timing quantities (units sec, sec/sec, sec/sec**2) are reported in
+exponential format with a precision of 12 decimal places.
+
+
+4. CLOCK DISCONTINUITIES
+
+Clock discontinuities (in bias, rate, and/or acceleration) could be
+reported in either of two ways.  If monitored in situ and logged, these
+could be reported as "DR" data types in .yyC station files.  If detected
+in data analysis, these can be reported in .clk files as two "AR" data
+records for the same station at the same epoch but with two different
+sets of clock values.
+
+
+5. RECEIVER AND SATELLITE NAMES
+
+Since the clock data are normally used in conjunction with data analysis
+results (even for the calibration and discontinuity data types), it is
+most convenient to use naming conventions for the receivers and
+satellites which correspond to the same names used in analyses.  In order
+to ensure uniqueness and complete identification, it is also necesssary
+to supply the receiver ID number (for fixed terrestrial receivers, the
+DOMES number issued by the Terrestrial Frame Section of the IERS).  Thus,
+receivers should be identified by:
+
+       Station names:     IGS official 4-character receiver name designator
+       Station number:    DOMES number (or other unique identifier)
+
+For satellite names, the following designations are used in RINEX:
+
+       Satellite names:   3-character string:
+                          "Gnn":   nn is the PRN number for GPS
+                                   satellites
+                          "Rnn":   nn is the slot number for
+                                   GLONASS satellites
+                          "Enn":   nn is the PRN number for Galileo
+                                   satellites
+                          "Cnn":   nn is the PRN number for COMPASS
+                                   satellites
+                          "Jnn":   nn is PRN-192 where PRN is the QZSS
+                                   satellite PRN number
+                          "Snn":   nn is PRN-100 for Satellite-Based
+                                   Augmentation System (SBAS) payloads
+
+If other satellite transmitters become available with suitable GPS- or
+GLONASS-like signals, such as the geostationary platforms currently
+being considered, then they can also be included using future RINEX
+naming conventions.
+
+
+6. RINEX CLOCK FORMAT DEFINITIONS AND EXAMPLES
+
+The header recorders should be included in the order indicated, when
+required.  The records below marked with * are optional.
+
+It is recommended that each record be read into a blank buffer string
+and then the information can be decoded afterwards from the buffer.
+Header and data records are limited to 80 characters. If more than
+bias and bias sigma are reported, a continuation line must be used.
+
+A data file must begin with the header records.  Data records begin
+immediately after the "END OF HEADER" record and complete the remainder
+of the data file.
+
+
+ +----------------------------------------------------------------------------+
+ |                                   TABLE A15                                |
+ |                CLOCK DATA FILE - HEADER SECTION DESCRIPTION                |
+ +--------------------+------------------------------------------+------------+
+ |    HEADER LABEL    |               DESCRIPTION                |   FORMAT   |
+ |  (Columns 61-80)   |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |RINEX VERSION / TYPE| - Format version: 3.00                   | F9.2,11X,  |
+ |                    | - File type ("C" for Clock Data)         |   A1,19X,  |
+ |                    | - Satellite System: G: GPS               |   A1,19X   |
+ |                    |                     R: GLONASS           |            |
+ |                    |                     E: Galileo           |            |
+ |                    |                     C: COMPASS           |            |
+ |                    |                     J: QZSS              |            |
+ |                    |                     S: SBAS payload      |            |
+ |                    |                     M: mixed             |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |PGM / RUN BY / DATE | - Name of program creating current file  |     A20,   |
+ |                    | - Name of agency  creating current file  |     A20,   |
+ |                    | - Date and time of file creation         |            |
+ |                    |   Format: yyyymmdd hhmmss zone           |     A20    |
+ |                    |     zone: 3-4 char. code for time zone.  |            |
+ |                    |           UTC recommended!               |            |
+ |                    |           LCL if local time with unknown |            |
+ |                    |               local time system code     |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+*|COMMENT             | Comment line(s)                          |     A60    |*
+ |                    |                                          |            |
+ |                    | While comments are generally optional,   |            |
+ |                    | they must be included for the following  |            |
+ |                    | information:                             |            |
+ |                    |                                          |            |
+ |                    | TIMESCALE RE-ALIGNMENT                   |            |
+ |                    | ----------------------                   |            |
+ |                    | If estimated clock values have been      |            |
+ |                    | uniformly shifted in timescale, e.g., to |            |
+ |                    | GPS time, the method applied should be   |            |
+ |                    | noted here.  In addition, non-zero clock |            |
+ |                    | values should be reported in the clock   |            |
+ |                    | data records for the analysis reference  |            |
+ |                    | clock, corresponding to the alignment    |            |
+ |                    | correction applied to all the receiver   |            |
+ |                    | and satellite clocks.  The analysis      |            |
+ |                    | reference clock should still be listed   |            |
+ |                    | as "ANALYSIS CLK REF" even though it     |            |
+ |                    | will have non-zero values.               |            |
+ |                    |                                          |            |
+ |                    | * REQUIRED for data types "Ax", if       |            |
+ |                    |   applicable                             |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |SYS / # / OBS TYPES | - Satellite system code (G/R/E/S)        |     A1,    |
+ |                    | - Number of different observation types  |   2X,I3,   |
+ |                    |   used for the specified satellite system|            |
+ |                    | - Observation descriptors:               |  13(1X,A3) |
+ |                    |   - Type                                 |            |
+ |                    |   - Band                                 |            |
+ |                    |   - Attribute                            |            |
+ |                    |                                          |            |
+ |                    | Use continuation line(s) for more than   |     6X,    |
+ |                    | 13 observation descriptors.              |  13(1X,A3) |
+ |                    |                                          |            |
+ |                    | In mixed files: Repeat for each          |            |
+ |                    | satellite system.                        |            |
+ |                    |                                          |            |
+ |                    | The following observation descriptors    |            |
+ |                    | are defined in RINEX Version 3.00:       |            |
+ |                    |                                          |            |
+ |                    | Type: C = Code / Pseudorange             |            |
+ |                    |       L = Phase                          |            |
+ |                    |       D = Doppler                        |            |
+ |                    |       S = Raw signal strength            |            |
+ |                    |       I = Ionosphere phase delay         |            |
+ |                    |       X = Receiver channel numbers       |            |
+ |                    | Band: 1 = L1                  (GPS,SBAS) |            |
+ |                    |           G1                       (GLO) |            |
+ |                    |           E2-L1-E1                 (GAL) |            |
+ |                    |       2 = L2                       (GPS) |            |
+ |                    |           G2                       (GLO) |            |
+ |                    |       5 = L5                  (GPS,SBAS) |            |
+ |                    |           E5a                      (GAL) |            |
+ |                    |       6 = E6                       (GAL) |            |
+ |                    |       7 = E5b                      (GAL) |            |
+ |                    |       8 = E5a+b                    (GAL) |            |
+ |                    |       0   for type X               (all) |            |
+ |                    | Attribute:                               |            |
+ |                    |       P = P code-based         (GPS,GLO) |            |
+ |                    |       C = C code-based    (SBAS,GPS,GLO) |            |
+ |                    |       Y = Y code-based             (GPS) |            |
+ |                    |       M = M code-based             (GPS) |            |
+ |                    |       A = A channel                (GAL) |            |
+ |                    |       B = B channel                (GAL) |            |
+ |                    |       C = C channel                (GAL) |            |
+ |                    |       I = I channel            (GPS,GAL) |            |
+ |                    |       Q = Q channel            (GPS,GAL) |            |
+ |                    |       S = M channel            (L2C GPS) |            |
+ |                    |       L = L channel            (L2C GPS) |            |
+ |                    |       X = B+C channels             (GAL) |            |
+ |                    |           I+Q channels         (GPS,GAL) |            |
+ |                    |           M+L channels             (GPS) |            |
+ |                    |       W = based on Z-tracking      (GPS) |            |
+ |                    |           (see text)                     |            |
+ |                    |       Z = A+B+C channels           (GAL) |            |
+ |                    |   blank : for types I and X        (all) |            |
+ |                    |           or unknown tracking mode       |            |
+ |                    |                                          |            |
+ |                    | All characters in uppercase only!        |            |
+ |                    |                                          |            |
+ |                    | Units : Phase       : full cycles        |            |
+ |                    |         Pseudorange : meters             |            |
+ |                    |         Doppler     : Hz                 |            |
+ |                    |         SNR etc     : receiver-dependent |            |
+ |                    |         Ionosphere  : full cycles        |            |
+ |                    |         Channel #   : See text           |            |
+ |                    |                                          |            |
+ |                    | Sign definition: See RINEX text.         |            |
+ |                    | The attribute can be left blank if not   |            |
+ |                    | known. See RINEX text!                   |            |
+ |                    |                                          |            |
+ |                    | NOTE FOR CLOCKS:                         |            |
+ |                    | Not all possible observation types are   |            |
+ |                    | relevant for clock analysis results.     |            |
+ |                    | List only those used for clocks.  The    |            |
+ |                    | code observables that are converted to   |            |
+ |                    | a different form for consistency should  |            |
+ |                    | be listed as equivalent to the converted |            |
+ |                    | type, not the original type.             |            |
+ |                    |                                          |            |
+ |                    | * REQUIRED for data types "Ax" & "MS"    |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |TIME SYSTEM ID      | - Time system used for time tags:        |   3X,A3    |
+ |                    |   - GPS = GPS system time                |            |
+ |                    |         -> steered to (TAI - 19 s)       |            |
+ |                    |   - GLO = GLONASS system time            |            |
+ |                    |         -> steered to UTC                |            |
+ |                    |   - GAL = Galileo system time            |            |
+ |                    |         -> steered to GPS time           |            |
+ |                    |   - QZS = QZSS system time               |            |
+ |                    |         -> steered to GPS time           |            |
+ |                    |   - UTC = Coordinated Universal Time     |            |
+ |                    |   - TAI = International Atomic Time      |            |
+ |                    |   Compulsory in mixed GNSS files         |            |
+ |                    |   Defaults: GPS for pure GPS files       |            |
+ |                    |             GLO for pure GLONASS files   |            |
+ |                    |             GAL for pure Galileo files   |            |
+ |                    |          (none) for pure COMPASS files   |            |
+ |                    |             GPS for pure QZSS files      |            |
+ |                    |          (none) for pure SBAS files      |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+*|LEAP SECONDS        | Number of leap seconds since 6-Jan-1980  |     I6     |*
+ |                    | as transmitted by the GPS almanac.       |            |
+ |                    | Recommended for mixed GNSS files.        |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |SYS / DCBS APPLIED  | - Satellite system (G/R/E/S)             |     A1,    |
+ |                    | - Program name used to apply             |  1X,A17,   |
+ |                    |   differential code bias corrections     |            |
+ |                    | - Source of corrections (URL)            |  1X,A40    |
+ |                    |                                          |            |
+ |                    | Repeat for each satellite system.        |            |
+ |                    |                                          |            |
+ |                    | No corrections applied: Blank fields or  |            |
+ |                    | record not present                       |            |
+ |                    |                                          |            |
+ |                    | * REQUIRED for data types "Ax", if       |            |
+ |                    |   applicable                             |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |SYS / PCVS APPLIED  | - Satellite system (G/R/E/S)             |     A1,    |
+ |                    | - Program name used to apply             |  1X,A17,   |
+ |                    |   phase center variation (PCV) and       |            |
+ |                    |   phase center offset (PCO) corrections  |            |
+ |                    | - Source of corrections (URL) -- give    |  1X,A40    |
+ |                    |   filename (preferably URL) containing   |            |
+ |                    |   values used in the data analysis for   |            |
+ |                    |   the vector antenna phase center        |            |
+ |                    |   offsets, PCOs (from the center of mass |            |
+ |                    |   to the antenna phase center for each   |            |
+ |                    |   satellite; from the antenna reference  |            |
+ |                    |   point (ARP) to the antenna phase       |            |
+ |                    |   center for a tracking antenna) and the |            |
+ |                    |   associated phase center variations     |            |
+ |                    |   (PCVs) as a function of viewing angle. |            |
+ |                    |                                          |            |
+ |                    | Repeat for each satellite system.        |            |
+ |                    |                                          |            |
+ |                    | No corrections applied: Blank fields or  |            |
+ |                    | record not present                       |            |
+ |                    |                                          |            |
+ |                    | * REQUIRED for data types "Ax", if       |            |
+ |                    |   applicable                             |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |# / TYPES OF DATA   | - Number of different clock data types   |     I6,    |
+ |                    |   stored in the file                     |            |
+ |                    | - List of clock data types               |  5(4X,A2)  |
+ |                    |                                          |            |
+ |                    | The following clock data types are       |            |
+ |                    | defined in RINEX Version 2:              |            |
+ |                    |                                          |            |
+ |                    | "AR": Data analysis results for receiver |            |
+ |                    |       clocks derived from a set of       |            |
+ |                    |       network receivers and satellites   |            |
+ |                    |       wrt to a reference clock fixed in  |            |
+ |                    |       the analysis                       |            |
+ |                    | "AS": Data analysis results for satellite|            |
+ |                    |       clocks derived from a set of       |            |
+ |                    |       network receivers and satellites   |            |
+ |                    |       wrt to a reference clock fixed in  |            |
+ |                    |       the analysis                       |            |
+ |                    | "CR": Calibration measurements for a     |            |
+ |                    |       single GNSS receiver wrt an        |            |
+ |                    |       external local reference clock     |            |
+ |                    | "DR": Discontinuity measurements for a   |            |
+ |                    |       single GPS receiver                |            |
+ |                    | "MS": Monitor measurements for the       |            |
+ |                    |       broadcast satellite clocks wrt a   |            |
+ |                    |       standard timescale                 |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |STATION NAME / NUM  | - 4-character receiver name designator   |   A4,1X,   |
+ |                    | - Unique receiver identifier,            |   A20,35X  |
+ |                    |   preferably the DOMES number for        |            |
+ |                    |   fixed stations                         |            |
+ |                    |                                          |            |
+ |                    | * REQUIRED for data types "CR" & "DR"    |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |STATION CLK REF     | Unique identifier for external           |    A60     |
+ |                    | reference clock being used as the        |            |
+ |                    | standard for calibration                 |            |
+ |                    |                                          |            |
+ |                    | * REQUIRED for data type "CR"            |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |ANALYSIS CENTER     | Name of Analysis Center                  |            |
+ |                    | - 3-character IGS AC designator          |   A3,2X,   |
+ |                    | - Full name of Analysis Center           |   A55      |
+ |                    |                                          |            |
+ |                    | * REQUIRED for data types "Ax" & "MS"    |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |# OF CLK REF        | - Number of analysis clock references    |   I6,1X,   |
+ |                    |   (satellite or receiver clocks) listed  |            |
+ |                    |   under "ANALYSIS CLK REF"               |            |
+ |                    | - Start epoch (in the specified time     |            |
+ |                    |   system):                               |            |
+ |                    |     year (4 digits),month,day,hour,min,  |   I4,4I3,  |
+ |                    |     second                               |   F10.6,   |
+ |                    |     [default: blank start and stop times |            |
+ |                    |      imply single "ANALYSIS CLK REF"     |            |
+ |                    |      applies for entire file]            |            |
+ |                    | - Stop epoch (in the specified time      |            |
+ |                    |   system):                               |     1X,    |
+ |                    |     year (4 digits),month,day,hour,min,  |   I4,4I3,  |
+ |                    |     second                               |   F10.6    |
+ |                    |     [default: blank start and stop times |            |
+ |                    |      imply single "ANALYSIS CLK REF"     |            |
+ |                    |      applies for entire file]            |            |
+ |                    |                                          |            |
+ |                    | NOTE: Multiple groups of "# OF CLK REF"  |            |
+ |                    | "ANALYSIS CLK REF" records can be used   |            |
+ |                    | for changes in analysis clock reference  |            |
+ |                    | within a single analysis file.           |            |
+ |                    |                                          |            |
+ |                    | * REQUIRED for data types "Ax"           |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |ANALYSIS CLK REF    | List of the analysis clock references    |            |
+ |                    | (repeat for each reference clock         |            |
+ |                    |  enumerated in the previous record)      |            |
+ |                    | - Name of the receiver or satellite      |   A4,1X,   |
+ |                    |   used as the fixed reference in data    |            |
+ |                    |   analysis                               |            |
+ |                    | - Unique identifier for reference        |  A20,15X,  |
+ |                    |   clock (if a receiver), preferably      |            |
+ |                    |   the DOMES number for fixed stations    |            |
+ |                    | - Optionally a non-zero value for the    | E19.12,1X  |
+ |                    |   the apriori clock constraint can be    |            |
+ |                    |   provided (unit: seconds).              |            |
+ |                    |                                          |            |
+ |                    | NOTE: If all analysis clock estimtes are |            |
+ |                    | re-aligned (e.g., to broadcast GPS time) |            |
+ |                    | then the fixed (reference) clock(s) will |            |
+ |                    | have non-zero values corresponding to    |            |
+ |                    | the alignment corrections applied to all |            |
+ |                    | other clocks.  The non-zero clock values |            |
+ |                    | for the reference clock must be reported |            |
+ |                    | in the clock data records together with  |            |
+ |                    | the other clock values, but the reference|            |
+ |                    | clock should still be listed here.  The  |            |
+ |                    | method of re-alignment should be         |            |
+ |                    | described in header comment records.     |            |
+ |                    |                                          |            |
+ |                    | * REQUIRED for data types "Ax"           |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |# OF SOLN STA / TRF | - Number of receivers included in the    |   I6,4X,   |
+ |                    |   clock data records (including the      |            |
+ |                    |   analysis reference clock even if it    |            |
+ |                    |   has zero values and is not given in    |            |
+ |                    |   the data records) and listed in the    |            |
+ |                    |   following header records               |            |
+ |                    | - Terrestrial reference frame or         |   A50      |
+ |                    |   SINEX solution for the station/        |            |
+ |                    |   receiver coordinates which match       |            |
+ |                    |   the clock solution                     |            |
+ |                    |                                          |            |
+ |                    | * REQUIRED for data types "Ax"           |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |SOLN STA NAME / NUM | For each station/receiver included in    |            |
+ |                    | the clock data records, as well as the   |            |
+ |                    | analysis reference clock even if it has  |            |
+ |                    | zero values and is not included in the   |            |
+ |                    | data records (number given in the        |            |
+ |                    | previous header record), include one     |            |
+ |                    | record with the following information:   |            |
+ |                    | - 4-character station/receiver name      |   A4,1X,   |
+ |                    |   designator                             |            |
+ |                    | - Unique station/receiver identifier,    |    A20,    |
+ |                    |   preferably the DOMES number for        |            |
+ |                    |   fixed stations                         |            |
+ |                    | - Geocentric XYZ station coordinates     |   I11,X,   |
+ |                    |   corresponding to the analysis clock    |   I11,X,   |
+ |                    |   values reported (in millimeters!)      |    I11     |
+ |                    |                                          |            |
+ |                    | * REQUIRED for data types "Ax"           |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |# OF SOLN SATS      | - Number of different satellites in the  |   I6,54X   |
+ |                    |   clock data records and listed in       |            |
+ |                    |   following header records               |            |
+ |                    |                                          |            |
+ |                    | * REQUIRED for data types "AS"           |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |PRN LIST            | List of all satellites reported in this  | 15(A1,I2,  |
+ |                    | file.  Each satellite name is a          |    1X)     |
+ |                    | 3-character string:                      |            |
+ |                    | - "Gnn" where nn is the PRN number       |            |
+ |                    |   for GPS satellites                     |            |
+ |                    | - "Rnn" where nn is the almanac number   |            |
+ |                    |   for GLONASS satellites                 |            |
+ |                    | - "Enn" where nn is the PRN number       |            |
+ |                    |   for Galileo satellites                 |            |
+ |                    | - "Cnn" where nn is the PRN number       |            |
+ |                    |   for COMPASS satellites                 |            |
+ |                    | - "Jnn" where nn is PRN-192 for the      |            |
+ |                    |   PRN number for QZSS satellites         |            |
+ |                    | - "Snn" where nn is PRN-100 for the      |            |
+ |                    |   PRN number for SBAS payloads           |            |
+ |                    |                                          |            |
+ |                    | * REQUIRED for data types "AS"           |            |
+ |                    |                                          |            |
+ +--------------------+------------------------------------------+------------+
+ |END OF HEADER       | Last record in the header section.       |    60X     |
+ +--------------------+------------------------------------------+------------+
+
+                        Records marked with * are optional
+
+
+ +----------------------------------------------------------------------------+
+ |                                   TABLE A16                                |
+ |                  CLOCK DATA FILE - DATA RECORD DESCRIPTION                 |
+ +-------------+-------------------------------------------------+------------+
+ | OBS. RECORD | DESCRIPTION                                     |   FORMAT   |
+ +-------------+-------------------------------------------------+------------+
+ |TYP/EPOCH/CLK| - Clock data type (AR, AS, CR, DR, MS)          |   A2,1X,   |
+ |             |                                                 |            |
+ |             | - Receiver or satellite name                    |   A4,1X,   |
+ |             |    - Receiver name is the IGS 4-character       |            |
+ |             |      designator                                 |            |
+ |             |    - Satellite name is a 3-character string:    |            |
+ |             |       - "Gnn" where nn is the PRN number        |            |
+ |             |         for GPS satellites                      |            |
+ |             |       - "Rnn" where nn is the almanac number    |            |
+ |             |         for GLONASS satellites                  |            |
+ |             |       - "Enn" where nn is the PRN number        |            |
+ |             |         for Galileo satellites                  |            |
+ |             |       - "Cnn" where nn is the PRN number        |            |
+ |             |         for COMPASS satellites                  |            |
+ |             |       - "Jnn" where nn is PRN-192 for the       |            |
+ |             |         PRN number for QZSS satellites          |            |
+ |             |       - "Snn" where nn is PRN-100 for the       |            |
+ |             |         PRN number for SBAS payloads            |            |
+ |             |                                                 |            |
+ |             | - Epoch in specified system time (not local     |            |
+ |             |   time!):                                       |            |
+ |             |     year (4 digits),month,day,hour,min,         |   I4,4I3,  |
+ |             |     second                                      |   F10.6,   |
+ |             | - Number of data values to follow               |   I3,3X,   |
+ |             | - Clock data in the following sequence:         |            |
+ |             |    - Clock bias (seconds)                       |  E19.12,X  |
+ |             |    - Clock bias sigma [optional] (seconds)      |  E19.12    |
+ +-------------+-------------------------------------------------+------------+
+ |TYP/EPOCH/CLK|    - Clock rate [optional] (dimensionless)      |  E19.12,X, |
+ |   (CONT)    |    - Clock rate sigma [optional] (dimensionless)|  E19.12,X, |
+ |             |    - Clock acceleration [optional] (per second) |  E19.12,X, |
+ |             |    - Clock acceleration sigma [optional]        |  E19.12    |
+ |             |      (per second)                               |            |
+ |             |                                                 |            |
+ |             |    The continuation line is necessary for more  |            |
+ |             |    than 2 data values                           |            |
+ |             |                                                 |            |
+ |             |    NB: For data types "Ax", "CR", and "MS",     |            |
+ |             |        clock data are in the sense of           |            |
+ |             |        reported station/satellite clock         |            |
+ |             |        *minus* reference clock value.           |            |
+ |             |        For data type "DR", clock data are       |            |
+ |             |        the sense of clock value after           |            |
+ |             |        discontinuity *minus* before.            |            |
+ |             |                                                 |            |
+ |             |    Clock data apart from bias values are        |            |
+ |             |    optional.  However, if any optional values   |            |
+ |             |    are included, then all lower order values    |            |
+ |             |    must be supplied even if optional (although  |            |
+ |             |    zero values may be given)                    |            |
+ |             |                                                 |            |
+ +-------------+-------------------------------------------------+------------+
+
+
++------------------------------------------------------------------------------+
+|                                   TABLE A17                                  |
+|                 CLOCK DATA FILE - EXAMPLE FOR ANALYSIS DATA                  |
++------------------------------------------------------------------------------+
+
+----|---1|0---|---2|0---|---3|0---|---4|0---|---5|0---|---6|0---|---7|0---|---8|
+
+     3.00           CLOCK DATA          GPS                 RINEX VERSION / TYPE
+TORINEXC V9.9       USNO                19960403 001000 UTC PGM / RUN BY / DATE
+EXAMPLE OF A CLOCK DATA ANALYSIS FILE                       COMMENT
+IN THIS CASE ANALYSIS RESULTS FROM GPS ONLY ARE INCLUDED    COMMENT
+No re-alignment of the clocks has been applied.             COMMENT
+G    4 C1W L1W C2W L2W                                      SYS / # / OBS TYPES
+   GPS                                                      TIME SYSTEM ID
+    10                                                      LEAP SECONDS
+G CC2NONCC          p1c1bias.hist @ goby.nrl.navy.mil       SYS / DCBS APPLIED
+G PAGES             igs05.atx @ igscb.jpl.nasa.gov          SYS / PCVS APPLIED 
+     2    AS    AR                                          # / TYPES OF DATA
+USN  USNO USING GIPSY/OASIS-II                              ANALYSIS CENTER
+     1 1994 07 14  0  0  0.000000 1994 07 14 20 59  0.000000# OF CLK REF
+USNO 40451S003                           -.123456789012E+00 ANALYSIS CLK REF
+     1 1994 07 14 21  0  0.000000 1994 07 14 21 59  0.000000# OF CLK REF
+TIDB 50103M108                          -0.123456789012E+00 ANALYSIS CLK REF
+     4    ITRF96                                            # OF SOLN STA / TRF
+GOLD 40405S031            1234567890 -1234567890 -1234567890SOLN STA NAME / NUM
+AREQ 42202M005           -1234567890  1234567890 -1234567890SOLN STA NAME / NUM
+TIDB 50103M108            1234567890 -1234567890  1234567890SOLN STA NAME / NUM
+HARK 30302M007           -1234567890  1234567890 -1234567890SOLN STA NAME / NUM
+USNO 40451S003            1234567890 -1234567890 -1234567890SOLN STA NAME / NUM
+    27                                                      # OF SOLN SATS 
+G01 G02 G03 G04 G05 G06 G07 G08 G09 G10 G13 G14 G15 G16 G17 PRN LIST
+G18 G19 G21 G22 G23 G24 G25 G26 G27 G29 G30 G31             PRN LIST
+                                                            END OF HEADER
+AR AREQ 1994 07 14 20 59  0.000000  6   -0.123456789012E+00 -0.123456789012E+01
+-0.123456789012E+02 -0.123456789012E+03 -0.123456789012E+04 -0.123456789012E+05
+AS G16  1994 07 14 20 59  0.000000  2    -.123456789012E+00  -.123456789012E-01
+AR GOLD 1994 07 14 20 59  0.000000  4    -.123456789012E-01  -.123456789012E-02
+ -.123456789012E-03  -.123456789012E-04
+AR HARK 1994 07 14 20 59  0.000000  2     .123456789012E+00   .123456789012E+00
+AR TIDB 1994 07 14 20 59  0.000000  6     .123456789012E+00   .123456789012E+00
+  .123456789012E+00   .123456789012E+00   .123456789012E+00   .123456789012E+00
+
+----|---1|0---|---2|0---|---3|0---|---4|0---|---5|0---|---6|0---|---7|0---|---8|
+
+
+
++------------------------------------------------------------------------------+
+|                                   TABLE A18                                  |
+|         CLOCK DATA FILE - EXAMPLE FOR CALIBRATION/DISCONTINUITY DATA         |
++------------------------------------------------------------------------------+
+
+----|---1|0---|---2|0---|---3|0---|---4|0---|---5|0---|---6|0---|---7|0---|---8|
+
+     2.00           CLOCK DATA                              RINEX VERSION / TYPE
+TORINEXC V9.9       USNO                 3-APR-96 00:10     PGM / RUN BY / DATE
+EXAMPLE OF A CLOCK DATA FILE                                COMMENT
+IN THIS CASE CALIBRATION/DISCONTINUITY DATA GIVEN           COMMENT
+    10                                                      LEAP SECONDS
+     2    CR    DR                                          # / TYPES OF DATA
+USNO 40451S003                                              STATION NAME / NUM
+UTC(USNO) MASTER CLOCK VIA CONTINUOUS CABLE MONITOR         STATION CLK REF
+                                                            END OF HEADER
+CR USNO 1994 07 14 20 59 50.000000  2     .123456789012E+00   .123456789012E-01
+CR USNO 1994 07 14 22 19 30.000000  2    -.123456789012E+00   .123456789012E-02
+DR USNO 1994 07 14 22 23 14.500000  2    -.123456789012E+01   .123456789012E+00
+CR USNO 1994 07 14 23 44 50.000000  2    -.123456789012E+02   .123456789012E+00
+
+----|---1|0---|---2|0---|---3|0---|---4|0---|---5|0---|---6|0---|---7|0---|---8|
+
+
