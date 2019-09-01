@@ -1,0 +1,1 @@
+# gnss-specs-and-standards
